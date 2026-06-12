@@ -26,12 +26,12 @@ You can toggle between a compact percentages-only layout and a full layout showi
 
 #### Compact Mode (Timeframe & Show Refresh disabled)
 <p align="center">
-  <img src="assets/statusbar_compact.png" width="700" alt="AG Quota Compact Mode" />
+  <img src="assets/statusbar_compact.png" alt="AG Quota Compact Mode" />
 </p>
 
 #### Full Info Mode (Timeframe & Show Refresh enabled)
 <p align="center">
-  <img src="assets/statusbar_full.png" width="700" alt="AG Quota Full Info Mode" />
+  <img src="assets/statusbar_full.png" alt="AG Quota Full Info Mode" />
 </p>
 
 ### Help & Configuration Dialog
