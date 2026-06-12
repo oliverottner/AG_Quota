@@ -20,6 +20,21 @@ A native, lightweight macOS menu bar application designed to monitor your local 
 
 ## Interface Preview
 
+### Menu Bar Display Modes
+
+You can toggle between a compact percentages-only layout and a full layout showing timeframes and reset dates/timestamps.
+
+#### Compact Mode (Timeframe & Show Refresh disabled)
+<p align="center">
+  <img src="assets/statusbar_compact.png" width="700" alt="AG Quota Compact Mode" />
+</p>
+
+#### Full Info Mode (Timeframe & Show Refresh enabled)
+<p align="center">
+  <img src="assets/statusbar_full.png" width="700" alt="AG Quota Full Info Mode" />
+</p>
+
+### Help & Configuration Dialog
 <p align="center">
   <img src="assets/screenshot.png" width="700" alt="AG Quota Help Window" />
 </p>
