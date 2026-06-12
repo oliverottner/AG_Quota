@@ -70,4 +70,5 @@ Alternatively, you can get the package from the **[Latest GitHub Releases](https
 ## License & Credits
 
 - Developed by **Oliver Ottner** ([www.iservice.at](https://www.iservice.at)).
+- This project is open-source software licensed under the copyleft **[GNU General Public License v3 (GPLv3)](LICENSE)**.
 - Made with ❤️ in Europe.
