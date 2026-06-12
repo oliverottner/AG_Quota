@@ -34,6 +34,11 @@ You can toggle between a compact percentages-only layout and a full layout showi
   <img src="assets/statusbar_full.png" alt="AG Quota Full Info Mode" />
 </p>
 
+### Dropdown Menu Options
+<p align="center">
+  <img src="assets/menu_dropdown.png" alt="AG Quota Dropdown Menu" />
+</p>
+
 ### Help & Configuration Dialog
 <p align="center">
   <img src="assets/screenshot.png" width="700" alt="AG Quota Help Window" />
