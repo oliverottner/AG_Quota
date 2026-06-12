@@ -1,0 +1,13 @@
+# macOS System Files
+.DS_Store
+
+# Build Artifacts
+AGQuota
+AGQuota.app/
+AGQuota.zip
+build_temp/
+*.xcarchive
+
+# Temporary Files
+*.swp
+*~
