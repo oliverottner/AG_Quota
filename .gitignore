@@ -4,7 +4,6 @@
 # Build Artifacts
 /AGQuota
 *.zip
-!/AGQuota.zip
 !/AGQuota.dmg
 build_temp/
 *.xcarchive

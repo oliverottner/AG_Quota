@@ -61,7 +61,6 @@ You can toggle between a compact percentages-only layout and a full layout showi
 
 You can download the application directly from the repository root:
 - **[Download AGQuota.dmg (Recommended)](AGQuota.dmg)** — Double-click the disk image and drag the app to your `/Applications` folder.
-- **[Download AGQuota.zip](AGQuota.zip)** — Extract and drag the app bundle to your `/Applications` folder.
 
 Alternatively, you can get the package from the **[Latest GitHub Releases](https://github.com/oliverottner/AG_Quota/releases/latest)**.
 
