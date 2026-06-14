@@ -11,6 +11,7 @@ A native, lightweight macOS menu bar application designed to monitor your local 
 ## Features
 
 - **Real-Time Monitoring**: Queries your local Antigravity Language Server every 30 seconds to fetch up-to-date rolling weekly and 5-hour token quotas.
+- **Dynamic Color Indicators**: Percentages are dynamically colored based on remaining quota: **Green** (>= 50%), **Orange** (20% - 50%), and **Red** (< 20%) to show usage status at a glance.
 - **Attributed Bold Displays**: Custom-drawn menu bar graphics highlighting model names.
 - **Highly Configurable**: Toggles for Gemini, Claude/GPT, refresh timestamps, and timeframe labels.
 - **Autostart Support**: Toggle automatic launch on system login directly from the app menu.
