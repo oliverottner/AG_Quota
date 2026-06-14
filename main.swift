@@ -587,8 +587,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             return NSAttributedString(string: " AG Quota ")
         }
         
-        var geminiBody = showTimeframe ? " Week - ?% // Five Hour - ?%" : " ?% // ?%"
-        var claudeBody = showTimeframe ? " Week - ?% // Five Hour - ?%" : " ?% // ?%"
+        let font = NSFont.systemFont(ofSize: NSFont.systemFontSize)
+        let boldFont = NSFont.boldSystemFont(ofSize: NSFont.systemFontSize)
+        
+        let defaultBody = NSMutableAttributedString()
+        defaultBody.append(NSAttributedString(string: showTimeframe ? " Week - ?% // Five Hour - ?%" : " ?% // ?%", attributes: [.font: font]))
+        
+        var geminiBody: NSAttributedString = defaultBody
+        var claudeBody: NSAttributedString = defaultBody
         
         let isoFormatter = ISO8601DateFormatter()
         isoFormatter.formatOptions = [.withInternetDateTime]
@@ -601,9 +607,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         fiveHourFormatter.dateFormat = "HH:mm"
         
         for group in summary.response.groups {
-            var weeklyPct = "?%"
+            let body = NSMutableAttributedString()
+            
+            var weeklyPct: String? = nil
+            var weeklyFraction: Double? = nil
             var weeklyTime = ""
-            var fiveHourPct = "?%"
+            
+            var fiveHourPct: String? = nil
+            var fiveHourFraction: Double? = nil
             var fiveHourTime = ""
             
             for bucket in group.buckets {
@@ -621,31 +632,68 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 
                 if bucket.window == "weekly" {
                     weeklyPct = pctStr
+                    weeklyFraction = bucket.remainingFraction
                     weeklyTime = timeStr
                 } else if bucket.window == "5h" {
                     fiveHourPct = pctStr
+                    fiveHourFraction = bucket.remainingFraction
                     fiveHourTime = timeStr
                 }
             }
             
-            let weekLabel = showTimeframe ? "Week - " : ""
-            let fiveHourLabel = showTimeframe ? "Five Hour - " : ""
-            let bodyStr = " \(weekLabel)\(weeklyPct)\(weeklyTime) // \(fiveHourLabel)\(fiveHourPct)\(fiveHourTime)"
+            // 1. Weekly Quota Part
+            body.append(NSAttributedString(string: showTimeframe ? " Week - " : " ", attributes: [.font: font]))
+            if let pctStr = weeklyPct, let fraction = weeklyFraction {
+                let color: NSColor
+                if fraction >= 0.5 {
+                    color = NSColor.systemGreen
+                } else if fraction >= 0.2 {
+                    color = NSColor.systemOrange
+                } else {
+                    color = NSColor.systemRed
+                }
+                body.append(NSAttributedString(string: pctStr, attributes: [.font: font, .foregroundColor: color]))
+            } else {
+                body.append(NSAttributedString(string: "?%", attributes: [.font: font]))
+            }
+            if !weeklyTime.isEmpty {
+                body.append(NSAttributedString(string: weeklyTime, attributes: [.font: font]))
+            }
+            
+            // 2. Separator
+            body.append(NSAttributedString(string: " // ", attributes: [.font: font]))
+            
+            // 3. Five Hour Quota Part
+            body.append(NSAttributedString(string: showTimeframe ? "Five Hour - " : "", attributes: [.font: font]))
+            if let pctStr = fiveHourPct, let fraction = fiveHourFraction {
+                let color: NSColor
+                if fraction >= 0.5 {
+                    color = NSColor.systemGreen
+                } else if fraction >= 0.2 {
+                    color = NSColor.systemOrange
+                } else {
+                    color = NSColor.systemRed
+                }
+                body.append(NSAttributedString(string: pctStr, attributes: [.font: font, .foregroundColor: color]))
+            } else {
+                body.append(NSAttributedString(string: "?%", attributes: [.font: font]))
+            }
+            if !fiveHourTime.isEmpty {
+                body.append(NSAttributedString(string: fiveHourTime, attributes: [.font: font]))
+            }
+            
             if group.displayName.contains("Gemini") {
-                geminiBody = bodyStr
+                geminiBody = body
             } else if group.displayName.contains("Claude") || group.displayName.contains("GPT") {
-                claudeBody = bodyStr
+                claudeBody = body
             }
         }
-        
-        let font = NSFont.systemFont(ofSize: NSFont.systemFontSize)
-        let boldFont = NSFont.boldSystemFont(ofSize: NSFont.systemFontSize)
         
         let attributedString = NSMutableAttributedString()
         
         if showGemini {
             attributedString.append(NSAttributedString(string: "  GEMINI*", attributes: [.font: boldFont]))
-            attributedString.append(NSAttributedString(string: geminiBody, attributes: [.font: font]))
+            attributedString.append(geminiBody)
         }
         
         if showGemini && showClaude {
@@ -655,7 +703,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if showClaude {
             let prefix = showGemini ? "" : "  "
             attributedString.append(NSAttributedString(string: "\(prefix)CLAUDE/GPT*", attributes: [.font: boldFont]))
-            attributedString.append(NSAttributedString(string: claudeBody, attributes: [.font: font]))
+            attributedString.append(claudeBody)
         }
         
         attributedString.append(NSAttributedString(string: "  ", attributes: [.font: font]))
