@@ -425,8 +425,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Bring app to front so the window is displayed on top of other windows
         NSApplication.shared.activate(ignoringOtherApps: true)
         
-        let icon = NSApp.applicationIconImage ?? NSImage()
-        let controller = HelpWindowController(iconImage: icon)
+        var icon = NSApp.applicationIconImage
+        if icon == nil || icon?.size.width == 0 {
+            if let resourcePath = Bundle.main.path(forResource: "icon", ofType: "icns") {
+                icon = NSImage(contentsOfFile: resourcePath)
+            }
+        }
+        let finalIcon = icon ?? NSImage()
+        let controller = HelpWindowController(iconImage: finalIcon)
         self.helpWindowController = controller
         controller.show()
         self.helpWindowController = nil
