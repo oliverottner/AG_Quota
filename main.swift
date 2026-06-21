@@ -296,10 +296,178 @@ class GradientCloseButton: NSButton {
     }
 }
 
+class SettingsWindowController: NSObject, NSTextFieldDelegate {
+    let window: NSWindow
+    var portField: NSTextField!
+    var tokenField: NSTextField!
+    var autoDetectCheckbox: NSButton!
+    var statusLabel: NSTextField!
+    var onSave: (() -> Void)?
+    
+    init(windowWidth: CGFloat = 420, windowHeight: CGFloat = 280) {
+        let styleMask: NSWindow.StyleMask = [.titled, .closable]
+        let rect = NSRect(x: 0, y: 0, width: windowWidth, height: windowHeight)
+        let win = NSWindow(contentRect: rect, styleMask: styleMask, backing: .buffered, defer: false)
+        win.title = "AG Quota Configuration"
+        win.isReleasedWhenClosed = false
+        win.level = .floating
+        self.window = win
+        
+        super.init()
+        
+        guard let contentView = win.contentView else { return }
+        
+        let margin: CGFloat = 24
+        var currentY: CGFloat = windowHeight - 40
+        
+        // Title Label
+        let titleLabel = NSTextField(labelWithString: "Connection Settings")
+        titleLabel.frame = NSRect(x: margin, y: currentY, width: windowWidth - 2 * margin, height: 24)
+        titleLabel.font = NSFont.boldSystemFont(ofSize: 16)
+        titleLabel.textColor = .labelColor
+        contentView.addSubview(titleLabel)
+        
+        currentY -= 35
+        
+        // Auto-detect Checkbox
+        autoDetectCheckbox = NSButton(checkboxWithTitle: "Auto-detect running server (requires non-sandboxed app)", target: self, action: #selector(autoDetectToggled))
+        autoDetectCheckbox.frame = NSRect(x: margin, y: currentY, width: windowWidth - 2 * margin, height: 18)
+        autoDetectCheckbox.font = NSFont.systemFont(ofSize: 12)
+        let useAutoDetect = UserDefaults.standard.object(forKey: "useAutoDetect") as? Bool ?? true
+        autoDetectCheckbox.state = useAutoDetect ? .on : .off
+        contentView.addSubview(autoDetectCheckbox)
+        
+        currentY -= 40
+        
+        // Port Label
+        let portLabel = NSTextField(labelWithString: "Local Server Port:")
+        portLabel.frame = NSRect(x: margin, y: currentY, width: 130, height: 18)
+        portLabel.font = NSFont.systemFont(ofSize: 12)
+        contentView.addSubview(portLabel)
+        
+        // Port Text Field
+        portField = NSTextField(frame: NSRect(x: margin + 140, y: currentY - 2, width: windowWidth - 2 * margin - 140, height: 22))
+        portField.font = NSFont.systemFont(ofSize: 12)
+        let savedPort = UserDefaults.standard.integer(forKey: "manualPort")
+        portField.stringValue = savedPort > 0 ? "\(savedPort)" : ""
+        portField.placeholderString = "e.g., 53215"
+        portField.delegate = self
+        contentView.addSubview(portField)
+        
+        currentY -= 35
+        
+        // Token Label
+        let tokenLabel = NSTextField(labelWithString: "CSRF Security Token:")
+        tokenLabel.frame = NSRect(x: margin, y: currentY, width: 130, height: 18)
+        tokenLabel.font = NSFont.systemFont(ofSize: 12)
+        contentView.addSubview(tokenLabel)
+        
+        // Token Text Field
+        tokenField = NSTextField(frame: NSRect(x: margin + 140, y: currentY - 2, width: windowWidth - 2 * margin - 140, height: 22))
+        tokenField.font = NSFont.systemFont(ofSize: 12)
+        tokenField.stringValue = UserDefaults.standard.string(forKey: "manualToken") ?? ""
+        tokenField.placeholderString = "x-codeium-csrf-token value"
+        tokenField.delegate = self
+        contentView.addSubview(tokenField)
+        
+        currentY -= 50
+        
+        // Explanation / Status Label
+        statusLabel = NSTextField(labelWithString: "")
+        statusLabel.frame = NSRect(x: margin, y: currentY, width: windowWidth - 2 * margin, height: 36)
+        statusLabel.font = NSFont.systemFont(ofSize: 11)
+        statusLabel.textColor = .secondaryLabelColor
+        statusLabel.cell?.wraps = true
+        statusLabel.cell?.isScrollable = false
+        contentView.addSubview(statusLabel)
+        
+        currentY -= 40
+        
+        // Cancel Button
+        let cancelBtn = NSButton(title: "Cancel", target: self, action: #selector(cancelClicked))
+        cancelBtn.frame = NSRect(x: windowWidth - margin - 180, y: margin, width: 80, height: 32)
+        contentView.addSubview(cancelBtn)
+        
+        // Save Button
+        let saveBtn = NSButton(title: "Save", target: self, action: #selector(saveClicked))
+        saveBtn.frame = NSRect(x: windowWidth - margin - 90, y: margin, width: 90, height: 32)
+        saveBtn.keyEquivalent = "\r" // Enter key to save
+        contentView.addSubview(saveBtn)
+        
+        updateFieldsState()
+    }
+    
+    @objc func autoDetectToggled() {
+        updateFieldsState()
+    }
+    
+    func updateFieldsState() {
+        let autoDetect = autoDetectCheckbox.state == .on
+        portField.isEnabled = !autoDetect
+        tokenField.isEnabled = !autoDetect
+        
+        if autoDetect {
+            statusLabel.stringValue = "Process scanning auto-detection active (runs ps & lsof). This option is not compatible with macOS App Store Sandboxing."
+            statusLabel.textColor = .secondaryLabelColor
+        } else {
+            statusLabel.stringValue = "Manual connection override active. Enter details manually. This option is compatible with sandboxed/App Store environments."
+            statusLabel.textColor = .systemGreen
+        }
+    }
+    
+    @objc func saveClicked() {
+        let autoDetect = autoDetectCheckbox.state == .on
+        UserDefaults.standard.set(autoDetect, forKey: "useAutoDetect")
+        
+        if !autoDetect {
+            let portStr = portField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+            if let portVal = Int(portStr), portVal > 0 {
+                UserDefaults.standard.set(portVal, forKey: "manualPort")
+            } else {
+                let alert = NSAlert()
+                alert.messageText = "Invalid Port"
+                alert.informativeText = "Please enter a valid numeric port number."
+                alert.alertStyle = .warning
+                alert.runModal()
+                return
+            }
+            
+            let tokenStr = tokenField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !tokenStr.isEmpty {
+                UserDefaults.standard.set(tokenStr, forKey: "manualToken")
+            } else {
+                let alert = NSAlert()
+                alert.messageText = "Invalid Token"
+                alert.informativeText = "Please enter a CSRF token."
+                alert.alertStyle = .warning
+                alert.runModal()
+                return
+            }
+        }
+        
+        UserDefaults.standard.synchronize()
+        onSave?()
+        window.close()
+        NSApplication.shared.stopModal()
+    }
+    
+    @objc func cancelClicked() {
+        window.close()
+        NSApplication.shared.stopModal()
+    }
+    
+    func show() {
+        window.makeKeyAndOrderFront(nil)
+        window.center()
+        NSApplication.shared.runModal(for: window)
+    }
+}
+
 class AppDelegate: NSObject, NSApplicationDelegate {
     var statusItem: NSStatusItem!
     var timer: Timer?
     var helpWindowController: HelpWindowController?
+    var settingsWindowController: SettingsWindowController?
     
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Register default preferences
@@ -307,7 +475,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             "showGemini": true,
             "showClaude": true,
             "showRefreshTime": true,
-            "showTimeframe": true
+            "showTimeframe": true,
+            "useAutoDetect": true,
+            "manualPort": 0,
+            "manualToken": ""
         ])
         
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -361,6 +532,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let howItem = NSMenuItem(title: "How?", action: #selector(showHowPopup), keyEquivalent: "")
         howItem.target = self
         menu.addItem(howItem)
+        
+        let configureItem = NSMenuItem(title: "Configure Connection...", action: #selector(showSettingsPopup), keyEquivalent: ",")
+        configureItem.target = self
+        menu.addItem(configureItem)
         
         menu.addItem(NSMenuItem.separator())
         
@@ -438,6 +613,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         self.helpWindowController = nil
     }
     
+    @objc func showSettingsPopup() {
+        NSApplication.shared.activate(ignoringOtherApps: true)
+        let controller = SettingsWindowController()
+        controller.onSave = { [weak self] in
+            self?.refreshQuota()
+        }
+        self.settingsWindowController = controller
+        controller.show()
+        self.settingsWindowController = nil
+    }
+    
     @objc func refreshQuota() {
         fetchQuota { [weak self] attrText in
             DispatchQueue.main.async {
@@ -453,6 +639,25 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     func getLSConfig() -> LSConfig? {
+        let useAutoDetect = UserDefaults.standard.object(forKey: "useAutoDetect") as? Bool ?? true
+        
+        if useAutoDetect {
+            if let config = runAutoDetect() {
+                return config
+            }
+        }
+        
+        // Manual override or fallback
+        let manualPort = UserDefaults.standard.integer(forKey: "manualPort")
+        let manualToken = UserDefaults.standard.string(forKey: "manualToken") ?? ""
+        if manualPort > 0 && !manualToken.isEmpty {
+            return LSConfig(port: manualPort, token: manualToken)
+        }
+        
+        return nil
+    }
+    
+    func runAutoDetect() -> LSConfig? {
         // 1. Run ps aux to find the running language_server
         let psProcess = Process()
         psProcess.executableURL = URL(fileURLWithPath: "/bin/ps")

@@ -58,7 +58,7 @@ else
 fi
 
 echo "Signing app bundle with identity: $SIGNING_IDENTITY..."
-codesign -s "$SIGNING_IDENTITY" --force --options runtime --deep "$ARCHIVE_APP_DIR"
+codesign -s "$SIGNING_IDENTITY" --force --options runtime --entitlements AGQuota.entitlements --deep "$ARCHIVE_APP_DIR"
 
 # 7. Generate Info.plist for the archive
 CREATION_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
